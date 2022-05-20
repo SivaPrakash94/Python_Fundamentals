@@ -1,0 +1,305 @@
+commit 53e777cc65816a0f9a72abd3d6e5870b8fedec28
+Author: Raymond Hettinger <raymond.hettinger@gmail.com>
+Date:   Wed May 18 17:02:02 2022 -0500
+
+    Optimize triple() with multiply logic
+
+diff --git a/math_tools.py b/math_tools.py
+index 4078f84..21b0780 100644
+--- a/math_tools.py
++++ b/math_tools.py
+@@ -6,6 +6,6 @@ def square(x):
+ 
+ def triple(x):
+     'Return value added to itself thrice'
+-    if not isinstance(x, (int, float)):
+-        raise TypeError('Expected an int or float')
+-    return x * 3
++    # We add zero here to trigger a mandatory TypeError non-numbers
++    # This is *much* faster than an isinstance() check.
++    return x * 3 + 0
+
+commit 4203c5db4d22352c3a3ce63f3d0ef739423d89d2
+Author: Raymond Hettinger <raymond.hettinger@gmail.com>
+Date:   Wed May 18 16:58:19 2022 -0500
+
+    Propagate the multiple logic to triple().
+
+diff --git a/math_tools.py b/math_tools.py
+index c68e361..4078f84 100644
+--- a/math_tools.py
++++ b/math_tools.py
+@@ -6,7 +6,6 @@ def square(x):
+ 
+ def triple(x):
+     'Return value added to itself thrice'
+-    total = 0
+-    for i in range(3):
+-        total += x
+-    return total
++    if not isinstance(x, (int, float)):
++        raise TypeError('Expected an int or float')
++    return x * 3
+
+commit 4045c8208edffd5c735b8b2cba3a7c3a8f035e8c
+Author: Raymond Hettinger <raymond.hettinger@gmail.com>
+Date:   Wed May 18 16:55:40 2022 -0500
+
+    Fix bug 117635: float support in square()
+
+diff --git a/math_tools.py b/math_tools.py
+index 9295540..c68e361 100644
+--- a/math_tools.py
++++ b/math_tools.py
+@@ -2,12 +2,7 @@
+ 
+ def square(x):
+     'Return a value times itself'
+-    if x < 0:
+-        x = -x
+-    total = 0
+-    for i in range(x):
+-        total += x
+-    return total
++    return x * x
+ 
+ def triple(x):
+     'Return value added to itself thrice'
+diff --git a/test_mathtools.py b/test_mathtools.py
+index a63995b..08a3180 100644
+--- a/test_mathtools.py
++++ b/test_mathtools.py
+@@ -23,6 +23,9 @@ class TestMathToolkit(unittest.TestCase):   # <-- Test suite
+         # square() incorrectly handled negatives
+         self.assertEqual(square(-5), 25)
+ 
++    def test_square_bug_117635(self):
++        # square() incorrectly handles floats
++        self.assertEqual(square(2.5), 6.25)
+ 
+ if __name__ == '__main__':
+ 
+
+commit e45332c305ad9615f064cdf54c0a2d5113895663
+Author: Raymond Hettinger <raymond.hettinger@gmail.com>
+Date:   Wed May 18 16:51:40 2022 -0500
+
+    Improve speed with unary negation.
+
+diff --git a/math_tools.py b/math_tools.py
+index 09bab27..9295540 100644
+--- a/math_tools.py
++++ b/math_tools.py
+@@ -3,7 +3,7 @@
+ def square(x):
+     'Return a value times itself'
+     if x < 0:
+-        x *= -1
++        x = -x
+     total = 0
+     for i in range(x):
+         total += x
+
+commit 64019743e4e545b5e637f878d0025e19aac8a19c
+Author: Raymond Hettinger <raymond.hettinger@gmail.com>
+Date:   Wed May 18 16:50:42 2022 -0500
+
+    Improve clarity with augmented assignment
+
+diff --git a/math_tools.py b/math_tools.py
+index 4ef4295..09bab27 100644
+--- a/math_tools.py
++++ b/math_tools.py
+@@ -3,7 +3,7 @@
+ def square(x):
+     'Return a value times itself'
+     if x < 0:
+-        x = x * -1
++        x *= -1
+     total = 0
+     for i in range(x):
+         total += x
+
+commit 81ae0c9bf40cd75308a24951402c2560d20be539
+Author: Raymond Hettinger <raymond.hettinger@gmail.com>
+Date:   Wed May 18 16:49:59 2022 -0500
+
+    Fix bug 117535: negative inputs to squares
+
+diff --git a/math_tools.py b/math_tools.py
+index f1932c2..4ef4295 100644
+--- a/math_tools.py
++++ b/math_tools.py
+@@ -2,6 +2,8 @@
+ 
+ def square(x):
+     'Return a value times itself'
++    if x < 0:
++        x = x * -1
+     total = 0
+     for i in range(x):
+         total += x
+diff --git a/test_mathtools.py b/test_mathtools.py
+index fc1412f..a63995b 100644
+--- a/test_mathtools.py
++++ b/test_mathtools.py
+@@ -19,6 +19,10 @@ class TestMathToolkit(unittest.TestCase):   # <-- Test suite
+         with self.assertRaises(TypeError):
+             triple('hello')
+ 
++    def test_square_bug_117535(self):
++        # square() incorrectly handled negatives
++        self.assertEqual(square(-5), 25)
++
+ 
+ if __name__ == '__main__':
+ 
+
+commit 45d54775860a884d278661a5a5dfb6abefab4f97
+Author: Raymond Hettinger <raymond.hettinger@gmail.com>
+Date:   Wed May 18 16:46:06 2022 -0500
+
+    Improve clarity using augmented assignment
+
+diff --git a/math_tools.py b/math_tools.py
+index eb17c23..f1932c2 100644
+--- a/math_tools.py
++++ b/math_tools.py
+@@ -4,12 +4,12 @@ def square(x):
+     'Return a value times itself'
+     total = 0
+     for i in range(x):
+-        total = total + x
++        total += x
+     return total
+ 
+ def triple(x):
+     'Return value added to itself thrice'
+     total = 0
+     for i in range(3):
+-        total = total + x
++        total += x
+     return total
+
+commit aab11eb700626cf673f535af0f319459a65f2f19
+Author: Raymond Hettinger <raymond.hettinger@gmail.com>
+Date:   Wed May 18 16:44:00 2022 -0500
+
+    Add triples(). Documented. Passes tests.
+
+diff --git a/math_tools.py b/math_tools.py
+index 53706f9..eb17c23 100644
+--- a/math_tools.py
++++ b/math_tools.py
+@@ -6,3 +6,10 @@ def square(x):
+     for i in range(x):
+         total = total + x
+     return total
++
++def triple(x):
++    'Return value added to itself thrice'
++    total = 0
++    for i in range(3):
++        total = total + x
++    return total
+diff --git a/test_mathtools.py b/test_mathtools.py
+index c53b34f..fc1412f 100644
+--- a/test_mathtools.py
++++ b/test_mathtools.py
+@@ -1,7 +1,7 @@
+ 'These are the unittest for our product'
+ 
+ import unittest                             # <-- Testing tool
+-from math_tools import square               # <-- Functions under test
++from math_tools import square, triple       # <-- Functions under test
+ 
+ class TestMathToolkit(unittest.TestCase):   # <-- Test suite
+ 
+@@ -12,6 +12,12 @@ class TestMathToolkit(unittest.TestCase):   # <-- Test suite
+         with self.assertRaises(TypeError):  # <----- Test step 4
+             square('hello')
+ 
++    def test_triple(self):                  # <-- Test case 2
++        self.assertEqual(triple(5), 15)
++        self.assertEqual(triple(1), 3)
++        self.assertEqual(triple(0), 0)
++        with self.assertRaises(TypeError):
++            triple('hello')
+ 
+ 
+ if __name__ == '__main__':
+
+commit ef7024282cb64808bd5f00397f17f144a4e783a2
+Author: Raymond Hettinger <raymond.hettinger@gmail.com>
+Date:   Wed May 18 16:37:15 2022 -0500
+
+    Add square(). Documented. Passes tests.
+
+diff --git a/math_tools.py b/math_tools.py
+index 47f1339..53706f9 100644
+--- a/math_tools.py
++++ b/math_tools.py
+@@ -1 +1,8 @@
+ 'This will be the product we are making: a math library'
++
++def square(x):
++    'Return a value times itself'
++    total = 0
++    for i in range(x):
++        total = total + x
++    return total
+diff --git a/test_mathtools.py b/test_mathtools.py
+index 2c6892a..c53b34f 100644
+--- a/test_mathtools.py
++++ b/test_mathtools.py
+@@ -1,10 +1,17 @@
+ 'These are the unittest for our product'
+ 
+ import unittest                             # <-- Testing tool
++from math_tools import square               # <-- Functions under test
+ 
+ class TestMathToolkit(unittest.TestCase):   # <-- Test suite
+ 
+-    pass
++    def test_square(self):                  # <-- Test case 1
++        self.assertEqual(square(5), 25)     # <----- Test step 1
++        self.assertEqual(square(1), 1)      # <----- Test step 2
++        self.assertEqual(square(0), 0)      # <----- Test step 3
++        with self.assertRaises(TypeError):  # <----- Test step 4
++            square('hello')
++
+ 
+ 
+ if __name__ == '__main__':
+
+commit 72158eb94d7c9d9c05b9f4a133d59d6b5d15dab3
+Author: Raymond Hettinger <raymond.hettinger@gmail.com>
+Date:   Wed May 18 16:24:25 2022 -0500
+
+    Empty toolbox and tests
+
+diff --git a/math_tools.py b/math_tools.py
+new file mode 100644
+index 0000000..47f1339
+--- /dev/null
++++ b/math_tools.py
+@@ -0,0 +1 @@
++'This will be the product we are making: a math library'
+diff --git a/test_mathtools.py b/test_mathtools.py
+new file mode 100644
+index 0000000..2c6892a
+--- /dev/null
++++ b/test_mathtools.py
+@@ -0,0 +1,12 @@
++'These are the unittest for our product'
++
++import unittest                             # <-- Testing tool
++
++class TestMathToolkit(unittest.TestCase):   # <-- Test suite
++
++    pass
++
++
++if __name__ == '__main__':
++
++    unittest.main()                         # <-- Test runner

@@ -1,0 +1,99 @@
+login as: admin
+Using keyboard-interactive authentication.
+Password:
+Last login: Mon Jul 19 17:57:44 UTC 2021 from 10.10.10.2 on pts/0
+
+Copyright 2004-2020, Cisco and/or its affiliates. All rights reserved.
+Cisco is a registered trademark of Cisco Systems, Inc.
+All other trademarks are property of their respective owners.
+
+Cisco Fire Linux OS v6.6.1 (build 14)
+Cisco Firepower Threat Defense for VMWare v6.6.1 (build 91)
+
+> show running-config interface
+!
+interface GigabitEthernet0/0
+ shutdown
+ no nameif
+ no security-level
+ no ip address
+!
+interface GigabitEthernet0/0.10
+ vlan 10
+ nameif DOT-Inside10
+ cts manual
+  propagate sgt preserve-untag
+  policy static sgt disabled trusted
+ security-level 0
+ ip address 10.10.10.2 255.255.255.0
+!
+interface GigabitEthernet0/0.20
+ vlan 20
+ nameif DOT-Inside20
+ cts manual
+  propagate sgt preserve-untag
+  policy static sgt disabled trusted
+ security-level 0
+ ip address 20.10.10.2 255.255.255.128
+!
+interface GigabitEthernet0/1
+ shutdown
+ no nameif
+ no security-level
+ no ip address
+!
+interface GigabitEthernet0/1.30
+ vlan 30
+ nameif DOT-Outside30
+ cts manual
+  propagate sgt preserve-untag
+  policy static sgt disabled trusted
+ security-level 0
+ ip address 30.10.10.2 255.255.255.0
+!
+interface GigabitEthernet0/2
+ shutdown
+ no nameif
+ no security-level
+ no ip address
+!
+interface GigabitEthernet0/3
+ shutdown
+ no nameif
+ no security-level
+ no ip address
+!
+interface GigabitEthernet0/4
+ shutdown
+ no nameif
+ no security-level
+ no ip address
+!
+interface GigabitEthernet0/5
+ shutdown
+ no nameif
+ no security-level
+ no ip address
+!
+interface GigabitEthernet0/6
+ shutdown
+ no nameif
+ no security-level
+ no ip address
+!
+interface GigabitEthernet0/7
+ shutdown
+ no nameif
+ no security-level
+ no ip address
+!
+interface Management0/0
+ management-only
+ nameif diagnostic
+ cts manual
+  propagate sgt preserve-untag
+  policy static sgt disabled trusted
+ security-level 0
+ no ip address
+>
+>
